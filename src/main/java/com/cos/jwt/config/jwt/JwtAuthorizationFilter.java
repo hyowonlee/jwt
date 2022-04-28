@@ -8,6 +8,7 @@ import com.cos.jwt.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 
 import javax.servlet.FilterChain;
@@ -50,13 +51,21 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         String jwtToken = request.getHeader("Authorization").replace("Bearer ", ""); // 토큰앞에 Bearer 문자열 빼기
 
         String username = JWT.require(Algorithm.HMAC512("cos")).build().verify(jwtToken).getClaim("username").asString(); // jwt토큰을 가져와서 토큰안에 있는 값인 username값을 가져올거
-        if(username != null) // username이 null이 아니면 서명이 정상적으로 된것
+        if(username != null) // username이 null이 아니면 서명이 정상적으로 된것 (사용자 인증이됨)
         {
             User userEntity = userRepository.findByUsername(username); // username이 db에 있는 회원이 맞는지 확인
 
             PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
+            // jwt 토큰 서명을 통해 서명이 정상이면 Authentication 객체를 만들어준다
             Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());// JwtAuthenticationFilter.java에서는 로그인 시도를 통해 Authentication를 생성하지만 여기처럼 강제로 Authentication으로 만들수도 있다
             // 여기의 null 들어간 부분은 password를 넣는부분임 우리는 서비스를 통해 로그인을 진행하는게 아닌 강제로 진행시켜주는거니 걍 null로 username도 db에 있는게 위에서 확인이 되니 그걸 근거로 만들어준거
+            // 실제로 로그인으로 만들어진 authentication 객체가 아님 토큰 서명을 통해 만든 객체, principalDetails.getAuthorities()로 권한도 넘겨줌
+
+            // SecurityContextHolder.getContext()는 시큐리티의 세션에 저장할 수 있는 세션공간을 의미 여기에 setAuthentication를 해서 우리가만든 authentication객체를 넣어주는데 그 의미는
+            // 강제로 시큐리티의 세션에 접근해 Authentication 객체를 저장한것, 여기까지 진행되면 세션에도 authentication 객체가 들어가니 로그인이 다 된것
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            chain.doFilter(request, response); // 다음 체인을 타게함
         }
 
     }
