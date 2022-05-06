@@ -90,6 +90,15 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         //여기서 만든 토큰을 넣어서 전송하는데 우리는 항상 앞에 Bearer라는 문자열을 넣을것
 
         // 이 토큰을 이용해서 토큰의 유효성을 검사해 인증된다면 민감정보에 접근할수있는 필터가 있어야됨
+
+//        //바로 위의것을 JwtProperties.java 인터페이스를 통해 좀더 깔끔하게 만들어줄수 있다 (JwtAuthoriationFilter.java에서도 이값들로 설정값을 세팅해주면 됨, 하드코딩을 피하기위한 행위)
+//        String jwtToken = JWT.create() // jwt토큰 만드는 빌더패턴
+//                .withSubject(principalDetails.getUsername())//토큰이름
+//                .withExpiresAt(new Date(System.currentTimeMillis() + JwtProperties.EXPIRATION_TIME))//토큰만료시간
+//                .withClaim("id", principalDetails.getUser().getId()) //비공개 클레임으로 내가 넣고싶은 값을 넣는것 여기선 id와 username을 담음
+//                .withClaim("username", principalDetails.getUser().getUsername())
+//                .sign(Algorithm.HMAC512(JwtProperties.SECRET)); // 서명값으로 hmac512 알고리즘의 비밀키가 될것 HMAC알고리즘은 받은 값과 비밀키를 이어붙여 해쉬화하는 알고리즘
+//        response.addHeader(JwtProperties.HEADER_STRING, JwtProperties.TOKEN_PREFIX + jwtToken);
     }
 }
 

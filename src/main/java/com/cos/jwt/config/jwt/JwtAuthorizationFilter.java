@@ -34,7 +34,7 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
     //인증이나 권한이 필요한 주소요청이 있을 때 해당 필터를 타게 됨 (SecurityConfig.java 에서 antMatcher로 권한필요로 만든것들)
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        super.doFilterInternal(request, response, chain);
+        //super.doFilterInternal(request, response, chain); //이건 우리가 밑에서 doFilter로 응답해줄거기에 이건 지움 안지우면 2번 응답하는게 됨
         System.out.println("인증이나 권한이 필요한 주소 요청이 되어서 BasicAuthenticationFilter를 상속받는 JwtAuthorizationFilter 탔음");
 
         String jwtHeader = request.getHeader("Authorization");
@@ -54,8 +54,10 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         if(username != null) // username이 null이 아니면 서명이 정상적으로 된것 (사용자 인증이됨)
         {
             User userEntity = userRepository.findByUsername(username); // username이 db에 있는 회원이 맞는지 확인
+            System.out.println("JwtAuthorizationFilter userEntity : "+userEntity.getUsername());
 
             PrincipalDetails principalDetails = new PrincipalDetails(userEntity);
+            System.out.println("JwtAuthorizationFilter principalDetails : "+principalDetails);
             // jwt 토큰 서명을 통해 서명이 정상이면 Authentication 객체를 만들어준다
             Authentication authentication = new UsernamePasswordAuthenticationToken(principalDetails, null, principalDetails.getAuthorities());// JwtAuthenticationFilter.java에서는 로그인 시도를 통해 Authentication를 생성하지만 여기처럼 강제로 Authentication으로 만들수도 있다
             // 여기의 null 들어간 부분은 password를 넣는부분임 우리는 서비스를 통해 로그인을 진행하는게 아닌 강제로 진행시켜주는거니 걍 null로 username도 db에 있는게 위에서 확인이 되니 그걸 근거로 만들어준거
@@ -65,9 +67,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             // 강제로 시큐리티의 세션에 접근해 Authentication 객체를 저장한것, 여기까지 진행되면 세션에도 authentication 객체가 들어가니 로그인이 다 된것
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
-            chain.doFilter(request, response); // 다음 체인을 타게함
         }
-
+        chain.doFilter(request, response); // 다음 체인을 타게함
     }
 }
 
